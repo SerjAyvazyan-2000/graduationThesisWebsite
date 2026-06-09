@@ -128,11 +128,65 @@ function previewPost() {
 
   box.innerHTML = `
     <strong>📄 Ձեր հոդվածի նախադիտումը</strong><br><br>
-    <strong style="font-size:1rem;color:white">${title}</strong><br><br>
+    <strong style="font-size:1rem;color:var(--text)">${title}</strong><br><br>
     ${intro ? `<em style="color:var(--accent2)">${intro}</em><br><br>` : ''}
     ${body ? body.split('\n').filter(l => l.trim()).map(l => `• ${l}`).join('<br>') + '<br><br>' : ''}
     <span style="font-size:0.75rem;opacity:0.6">📊 Բառաքանակ: ~${wordCount} | ⏱ Կարդալու ժամանակ: ~${readMin} րոպե</span>
   `;
+
+  box.classList.add('visible');
+}
+
+function buildOutline() {
+  const audience = document.getElementById('audience-input').value.trim();
+  const outline = document.getElementById('outline-input').value
+    .split('\n')
+    .map(item => item.trim())
+    .filter(Boolean);
+  const box = document.getElementById('outline-result');
+
+  const tips = [];
+  if (!audience) tips.push('Նշեք, թե ով է ձեր ընթերցողը։');
+  if (outline.length < 3) tips.push('Ավելացրեք առնվազն 3 ենթավերնագիր։');
+  if (outline.some(item => item.length < 8)) tips.push('Ենթավերնագրերը դարձրեք ավելի հստակ։');
+
+  if (tips.length) {
+    box.innerHTML = '🧠 <strong>Պլանը դեռ կարելի է լավացնել.</strong><br>' + tips.map(t => '• ' + t).join('<br>');
+  } else {
+    box.innerHTML = `
+      ✅ <strong>Հիանալի պլան է։</strong><br><br>
+      👥 Ընթերցողներ: <strong>${audience}</strong><br>
+      🧩 Կառուցվածք:<br>
+      ${outline.map((item, i) => `${i + 1}. ${item}`).join('<br>')}<br><br>
+      ✨ Խորհուրդ. Յուրաքանչյուր ենթավերնագրի տակ գրեք 4-6 նախադասություն և ավելացրեք մեկ նկար կամ օրինակ։
+    `;
+  }
+
+  box.classList.add('visible');
+}
+
+function checkSafety() {
+  const text = document.getElementById('safety-input').value.trim().toLowerCase();
+  const box = document.getElementById('safety-result');
+
+  if (!text) {
+    box.innerHTML = '⚠️ Գրեք, թե ինչ նյութ եք ուզում հրապարակել։';
+    box.classList.add('visible');
+    return;
+  }
+
+  const riskyWords = ['հասցե', 'հեռախոս', 'գաղտնաբառ', 'դպրոցի հասցե', 'անձնագիր', 'բանկ', 'տուն', 'քարտ'];
+  const privatePhotoWords = ['ընկեր', 'ընկերոջ', 'դասընկեր', 'նկար', 'լուսանկար'];
+  const hasRisk = riskyWords.some(word => text.includes(word));
+  const hasPhoto = privatePhotoWords.some(word => text.includes(word));
+
+  if (hasRisk) {
+    box.innerHTML = '🚫 <strong>Զգուշացում.</strong> Մի հրապարակեք անձնական տվյալներ՝ հասցե, հեռախոս, գաղտնաբառ, քարտի տվյալներ կամ դպրոցի ճշգրիտ վայր։';
+  } else if (hasPhoto) {
+    box.innerHTML = '🟡 <strong>Ստուգեք թույլտվությունը.</strong> Եթե նկարում ուրիշ մարդիկ կան, նախ հարցրեք նրանց կամ ծնողներին։ Կարող եք նաև դեմքերը փակել։';
+  } else {
+    box.innerHTML = '✅ <strong>Ավելի անվտանգ է թվում։</strong> Մինչ հրապարակելը մեկ անգամ էլ ստուգեք՝ չկա՞ անձնական տվյալ, վիրավորական խոսք կամ ուրիշի հեղինակային նյութ առանց նշելու։';
+  }
 
   box.classList.add('visible');
 }
@@ -237,19 +291,116 @@ const QUESTIONS = [
     ],
     correct: 2,
     explain: "Նկարներն ու տեսողական բովանդակությունն ուշադրություն են գրավում, կարդայելն ավելի հաճելի են դարձնում ու SEO-ն բարելավում:"
+  },
+  {
+    q: "Ինչո՞ւ է կարևոր հոդվածում աղբյուր նշել",
+    opts: ["Որ հոդվածը երկար երևա", "Որ ընթերցողը կարողանա ստուգել տեղեկությունը", "Որ բոլոր բառերը կապույտ լինեն", "Որ բլոգը դանդաղ բացվի"],
+    correct: 1,
+    explain: "Աղբյուրները ցույց են տալիս, թե որտեղից է տեղեկությունը, և բարձրացնում են վստահությունը։"
+  },
+  {
+    q: "Ի՞նչ է բլոգի «մենյուն»",
+    opts: ["Կայքի բաժիններին տանող ցանկ", "Միայն նկարների պահոց", "Գաղտնաբառի տեսակ", "Տեքստը մեծացնող կոճակ"],
+    correct: 0,
+    explain: "Մենյուն օգնում է արագ գտնել էջերը՝ Գլխավոր, Հոդվածներ, Իմ մասին, Կապ և այլն։"
+  },
+  {
+    q: "Ո՞րն է ավելի անվտանգ հրապարակում աշակերտի բլոգում",
+    opts: ["Տան հասցեն ու հեռախոսը", "Ընդհանուր հոբբիները և ուսումնական նախագիծը", "Գաղտնաբառի նկար", "Դասընկերոջ լուսանկարը առանց թույլտվության"],
+    correct: 1,
+    explain: "Բլոգում պետք է խուսափել անձնական տվյալներից և ուրիշների նկարներից առանց թույլտվության։"
+  },
+  {
+    q: "Ի՞նչ է նշանակում «draft»",
+    opts: ["Հոդվածի սևագիր տարբերակ", "Կայքի վերջնական հասցե", "Մեկնաբանություն", "Վճարովի գովազդ"],
+    correct: 0,
+    explain: "Draft-ը դեռ չհրապարակված սևագիրն է, որը կարելի է խմբագրել։"
+  },
+  {
+    q: "Ո՞րն է լավ ներածության նպատակը",
+    opts: ["Միանգամից փակել թեման", "Գրավել ընթերցողին և բացատրել ինչի մասին է հոդվածը", "Միայն հեղինակի անունը գրել", "Փոխարինել ամբողջ հոդվածը"],
+    correct: 1,
+    explain: "Ներածությունը ընթերցողին ասում է՝ ինչու արժե շարունակել կարդալ։"
+  },
+  {
+    q: "Ինչպե՞ս կարելի է դարձնել երկար հոդվածը հեշտ կարդացվող",
+    opts: ["Գրել ամբողջը մեկ տողով", "Օգտագործել ենթավերնագրեր, կարճ պարբերություններ և ցուցակներ", "Ջնջել բոլոր նկարները", "Օգտագործել միայն մեծատառեր"],
+    correct: 1,
+    explain: "Ենթավերնագրերն ու կարճ պարբերությունները օգնում են արագ հասկանալ նյութի կառուցվածքը։"
+  },
+  {
+    q: "Ի՞նչ է բլոգի «կատեգորիան»",
+    opts: ["Հոդվածների թեմատիկ խումբ", "Միայն ֆոնի գույն", "Մկնիկի տեսակ", "Ինտերնետի արագություն"],
+    correct: 0,
+    explain: "Կատեգորիաները դասավորում են հոդվածները ըստ թեմաների՝ գիտություն, սպորտ, գրքեր և այլն։"
+  },
+  {
+    q: "Ո՞ր նախադասությունն է ավելի լավ վերնագիր",
+    opts: ["Իմ հոդվածը", "Ինչպես պատրաստել առողջ նախաճաշ 10 րոպեում", "Բարև", "Շատ երկար և անհասկանալի վերնագիր բոլոր բաների մասին"],
+    correct: 1,
+    explain: "Լավ վերնագիրը կոնկրետ է, հետաքրքիր և ցույց է տալիս հոդվածի օգուտը։"
+  },
+  {
+    q: "Ինչո՞ւ է պետք նախադիտել հոդվածը հրապարակելուց առաջ",
+    opts: ["Սխալները, նկարները և դասավորությունը ստուգելու համար", "Որ համակարգիչը անջատվի", "Որ վերնագիրը կորի", "Դա պարտադիր չէ երբեք"],
+    correct: 0,
+    explain: "Նախադիտումը օգնում է գտնել սխալներ և համոզվել, որ ամեն ինչ գեղեցիկ է երևում։"
+  },
+  {
+    q: "Ի՞նչը կարող է օգնել ընթերցողին մեկնաբանություն թողնել",
+    opts: ["Հոդվածի վերջում հարց տալը", "Բոլոր մեկնաբանությունները անջատելը", "Միայն բարդ բառեր օգտագործելը", "Թեման չնշելը"],
+    correct: 0,
+    explain: "Հարցը հոդվածի վերջում ընթերցողին հրավիրում է մասնակցել քննարկմանը։"
+  },
+  {
+    q: "Ո՞րն է հեղինակային իրավունքի ճիշտ պահպանումը",
+    opts: ["Ուրիշի նկարը վերցնել առանց նշելու", "Օգտագործել սեփական նկար կամ նշել աղբյուրը", "Ջնջել նկարի հեղինակի անունը", "Ներկայացնել ուրիշի նյութը որպես սեփական"],
+    correct: 1,
+    explain: "Սեփական նյութը կամ ճիշտ նշված աղբյուրը ավելի ազնիվ և անվտանգ ընտրություն է։"
+  },
+  {
+    q: "Ինչի՞ համար է «Իմ մասին» էջը",
+    opts: ["Հեղինակին ներկայացնելու և բլոգի նպատակը բացատրելու", "Միայն գաղտնաբառ պահելու", "Կայքը փակելու", "Հոդվածները ջնջելու"],
+    correct: 0,
+    explain: "«Իմ մասին» էջը օգնում է ընթերցողին ճանաչել հեղինակին և հասկանալ բլոգի թեման։"
+  },
+  {
+    q: "Ի՞նչ է լավ բլոգային սովորություն",
+    opts: ["Հրապարակել առանց կարդալու", "Պարբերաբար գրել և խմբագրել", "Միշտ պատճենել ուրիշներից", "Չպատասխանել մեկնաբանություններին"],
+    correct: 1,
+    explain: "Լավ բլոգերը գրում է պարբերաբար, ստուգում է տեքստը և հարգում ընթերցողներին։"
+  },
+  {
+    q: "Ո՞րն է բլոգի համար հարմար նկար",
+    opts: ["Թեմային համապատասխան պարզ նկար", "Շատ մութ ու անհասկանալի նկար", "Ուրիշի անձնական նկարը առանց թույլտվության", "Նկար, որը կապ չունի թեմայի հետ"],
+    correct: 0,
+    explain: "Նկարը պետք է օգնի հասկանալ թեման և լինի անվտանգ օգտագործման համար։"
+  },
+  {
+    q: "Ի՞նչ է «թեգը»",
+    opts: ["Կարճ բառ կամ արտահայտություն, որով նշվում է հոդվածի թեման", "Հոդվածը ջնջող կոճակ", "Տառատեսակի անուն", "Բլոգի գաղտնի կոդ"],
+    correct: 0,
+    explain: "Թեգերը օգնում են որոնել և խմբավորել հոդվածները ըստ կարևոր բառերի։"
   }
 ];
 
+const QUIZ_SIZE = 10;
+let activeQuestions = [];
 let currentQ = 0;
 let score = 0;
 let answered = false;
 let userAnswers = [];
+
+function shuffleList(list) {
+  return [...list].sort(() => Math.random() - 0.5);
+}
 
 function startQuiz() {
   currentQ = 0;
   score = 0;
   answered = false;
   userAnswers = [];
+  activeQuestions = shuffleList(QUESTIONS).slice(0, QUIZ_SIZE);
 
   document.getElementById('quiz-results').classList.remove('show');
   document.getElementById('quiz-card').style.display = 'block';
@@ -266,7 +417,7 @@ function startQuiz() {
 function renderQuestion() {
   answered = false;
 
-  const q = QUESTIONS[currentQ];
+  const q = activeQuestions[currentQ];
 
   document.getElementById('q-num').textContent = 'ՀԱՐՑ ' + (currentQ + 1);
   document.getElementById('q-text').textContent = q.q;
@@ -288,9 +439,9 @@ function renderQuestion() {
 
   document.getElementById('btn-next').classList.remove('show');
 
-  const pct = (currentQ / QUESTIONS.length) * 100;
+  const pct = (currentQ / activeQuestions.length) * 100;
   document.getElementById('qpbar').style.width = pct + '%';
-  document.getElementById('qplabel').textContent = 'Հարց ' + (currentQ + 1) + ' / ' + QUESTIONS.length;
+  document.getElementById('qplabel').textContent = 'Հարց ' + (currentQ + 1) + ' / ' + activeQuestions.length;
 }
 
 function selectAnswer(idx) {
@@ -298,7 +449,7 @@ function selectAnswer(idx) {
 
   answered = true;
 
-  const q = QUESTIONS[currentQ];
+  const q = activeQuestions[currentQ];
   const btns = document.querySelectorAll('.option-btn');
 
   btns.forEach(b => {
@@ -331,14 +482,14 @@ function selectAnswer(idx) {
   updateScoreLive();
 
   const nextBtn = document.getElementById('btn-next');
-  nextBtn.textContent = currentQ < QUESTIONS.length - 1 ? 'Հաջորդ հարց →' : '📊 Տեսնել արդյունքները';
+  nextBtn.textContent = currentQ < activeQuestions.length - 1 ? 'Հաջորդ հարց →' : '📊 Տեսնել արդյունքները';
   nextBtn.classList.add('show');
 }
 
 function nextQuestion() {
   currentQ++;
 
-  if (currentQ >= QUESTIONS.length) {
+  if (currentQ >= activeQuestions.length) {
     showResults();
   } else {
     renderQuestion();
@@ -357,7 +508,7 @@ function showResults() {
     el.style.display = 'none';
   });
 
-  const total = QUESTIONS.length;
+  const total = activeQuestions.length;
   const wrong = total - score;
   const pct = Math.round((score / total) * 100);
 
@@ -437,7 +588,84 @@ if (qEngineEl) {
   quizObserver.observe(qEngineEl);
 }
 
+const BUILDER_ITEMS = [
+  { id: 'title', label: 'Հստակ վերնագիր', icon: '🏷️', useful: true, slot: 0 },
+  { id: 'menu', label: 'Բաժինների մենյու', icon: '🧭', useful: true, slot: 1 },
+  { id: 'intro', label: 'Կարճ ներածություն', icon: '✨', useful: true, slot: 2 },
+  { id: 'image', label: 'Թեմային համապատասխան նկար', icon: '🖼️', useful: true, slot: 3 },
+  { id: 'article', label: 'Ենթավերնագրերով հոդված', icon: '📝', useful: true, slot: 4 },
+  { id: 'source', label: 'Աղբյուր և անվտանգություն', icon: '🛡️', useful: true, slot: 5 },
+  { id: 'password', label: 'Գաղտնաբառի նկար', icon: '🔐', useful: false },
+  { id: 'noise', label: 'Շատ շարժվող գովազդ', icon: '💥', useful: false },
+  { id: 'address', label: 'Տան հասցե', icon: '📍', useful: false }
+];
+
+let selectedBuilderItems = [];
+
+function startBuilderGame() {
+  selectedBuilderItems = [];
+  renderBuilderGame();
+}
+
+function renderBuilderGame() {
+  const palette = document.getElementById('builder-palette');
+  const feedback = document.getElementById('builder-feedback');
+  const slots = document.querySelectorAll('.preview-slot');
+  const usefulCount = selectedBuilderItems.length;
+  const pct = Math.round((usefulCount / 6) * 100);
+
+  document.getElementById('game-score').textContent = 'Հավաքված: ' + usefulCount + ' / 6';
+  document.getElementById('game-round').textContent = 'Որակ: ' + pct + '%';
+  document.getElementById('builder-title').textContent = usefulCount === 6
+    ? 'Բլոգի էջը պատրաստ է'
+    : 'Ընտրեք բլոգի համար կարևոր մասերը';
+
+  slots.forEach((slot, index) => {
+    const item = BUILDER_ITEMS.find(part => part.slot === index && selectedBuilderItems.includes(part.id));
+    slot.className = 'preview-slot ' + (item ? 'filled' : 'empty');
+    slot.textContent = item ? item.icon + ' ' + item.label : slot.dataset.label || slot.textContent;
+    if (!slot.dataset.label) slot.dataset.label = slot.textContent;
+  });
+
+  palette.innerHTML = '';
+  BUILDER_ITEMS.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'builder-item ' + (selectedBuilderItems.includes(item.id) ? 'selected' : '');
+    btn.innerHTML = `<span>${item.icon}</span>${item.label}`;
+    btn.disabled = selectedBuilderItems.includes(item.id);
+    btn.onclick = () => chooseBuilderItem(item);
+    palette.appendChild(btn);
+  });
+
+  feedback.className = 'mission-feedback';
+  feedback.textContent = '';
+
+  if (usefulCount === 6) {
+    feedback.className = 'mission-feedback show ok';
+    feedback.textContent = 'Գերազանց. բլոգի էջում կա վերնագիր, մենյու, ներածություն, նկար, հոդված և անվտանգ հրապարակման մաս։';
+  }
+}
+
+function chooseBuilderItem(item) {
+  const feedback = document.getElementById('builder-feedback');
+
+  if (!item.useful) {
+    feedback.className = 'mission-feedback show fail';
+    feedback.textContent = 'Այս մասը բլոգում չավելացնենք. այն կարող է շեղել, վտանգավոր լինել կամ վնասել ընթերցողի վստահությանը։';
+    return;
+  }
+
+  selectedBuilderItems.push(item.id);
+  renderBuilderGame();
+
+  if (selectedBuilderItems.length < 6) {
+    feedback.className = 'mission-feedback show ok';
+    feedback.textContent = 'Լավ ընտրություն. էջը դարձավ ավելի օգտակար և հարմար կարդալու համար։';
+  }
+}
+
 // Also start on page load if quiz section is already visible
 window.addEventListener('load', () => {
   if (!quizStarted) startQuiz();
+  startBuilderGame();
 });
